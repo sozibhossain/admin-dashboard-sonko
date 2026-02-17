@@ -93,9 +93,11 @@ export default function DashboardLayout({
       <div className="flex-1 flex flex-col">
         <header className="h-16 bg-white border-b border-[#d7d7d7] flex items-center justify-end px-8">
           <div className="flex items-center gap-4">
-            <button type="button" className="text-[#ff2d2d]">
-              <Bell className="h-5 w-5" />
-            </button>
+            <Link href="/notifications">
+              <button type="button" className="text-[#ff2d2d]">
+                <Bell className="h-5 w-5" />
+              </button>
+            </Link>
             <div className="text-right leading-tight">
               <div className="text-sm font-semibold text-[#2c2c2c]">
                 Alex rock
