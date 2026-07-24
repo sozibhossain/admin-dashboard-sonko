@@ -80,6 +80,21 @@ export type Country = {
   updatedAt?: string
 }
 
+
+export type LogoSetting = {
+  _id?: string
+  key: string
+  type: "country" | "telecom" | "bill" | "bank" | "profile" | "app" | "other"
+  name: string
+  countryCode?: string
+  code?: string
+  logoUrl?: string
+  defaultLogoUrl?: string
+  flagUrl?: string
+  enabled?: boolean
+  createdAt?: string
+  updatedAt?: string
+}
 export type Service = {
   _id: string
   title: string
@@ -483,5 +498,17 @@ export const getAdminSettings = async () => {
 
 export const setAdminSetting = async (payload: { transactionType: string; percentage: number; updatedBy?: string }) => {
   const { data } = await api.post<ApiResponse<AdminSetting>>("/admin-setting/set", payload)
+  return data
+}
+
+export const getAdminLogoSettings = async () => {
+  const { data } = await api.get<ApiResponse<LogoSetting[]>>("/admin/logos")
+  return data
+}
+
+export const updateAdminLogoSetting = async (payload: FormData) => {
+  const { data } = await api.put<ApiResponse<LogoSetting>>("/admin/logos", payload, {
+    headers: { "Content-Type": "multipart/form-data" },
+  })
   return data
 }

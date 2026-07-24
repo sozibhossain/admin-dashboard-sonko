@@ -18,6 +18,7 @@ import {
   ClipboardList,
   Bell,
   Settings,
+  Images,
   LogOut,
 } from "lucide-react";
 
@@ -33,6 +34,7 @@ const menuItems = [
   { name: "Customers", href: "/customers", icon: UserRound },
   { name: "Reports", href: "/reports", icon: FileText },
   { name: "Payment Gateways", href: "/payment-gateways", icon: CreditCard },
+  { name: "Brand Logos", href: "/brand-logos", icon: Images },
   { name: "Audit Log", href: "/audit-log", icon: ClipboardList },
   { name: "Notifications", href: "/notifications", icon: Bell },
   { name: "Setting", href: "/settings", icon: Settings },
@@ -120,3 +122,4 @@ export default function DashboardLayout({
     </div>
   );
 }
+
