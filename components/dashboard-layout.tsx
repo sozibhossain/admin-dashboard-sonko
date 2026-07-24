@@ -32,6 +32,7 @@ const menuItems = [
   { name: "Fraud Detection", href: "/fraud-detection", icon: ShieldAlert },
   { name: "Customers", href: "/customers", icon: UserRound },
   { name: "Reports", href: "/reports", icon: FileText },
+  { name: "Payment Gateways", href: "/payment-gateways", icon: CreditCard },
   { name: "Audit Log", href: "/audit-log", icon: ClipboardList },
   { name: "Notifications", href: "/notifications", icon: Bell },
   { name: "Setting", href: "/settings", icon: Settings },
@@ -50,11 +51,11 @@ export default function DashboardLayout({
       <div className="w-64 bg-white border-r border-[#d7d7d7] flex flex-col">
         <div className="h-16 flex items-center justify-center gap-2 px-5 border-b border-[#d7d7d7]">
           <Image
-            src="/logo.png"
+            src="/sunu.svg"
             alt="Company Logo"
-            width={32}
-            height={32}
-            className=" w-[32px] h-[44px]"
+            width={50}
+            height={50}
+            className=" w-[60px] h-[60px]"
           />
         </div>
 

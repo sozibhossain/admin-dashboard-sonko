@@ -1,6 +1,6 @@
 "use client"
 
-import axios, { type AxiosError, type AxiosRequestConfig } from "axios"
+import axios, { AxiosHeaders, type AxiosError, type AxiosRequestConfig } from "axios"
 import { getSession } from "next-auth/react"
 import { API_BASE_URL } from "@/lib/api-base"
 
@@ -31,12 +31,30 @@ export type UserVerificationInfo = {
 export type User = {
   _id: string
   name?: string
+  username?: string
   email?: string
   phone?: string
   role?: string
+  requestedRole?: string
+  agentStatus?: "none" | "pending" | "approved" | "rejected"
+  agentProfile?: {
+    fullName?: string
+    businessName?: string
+    businessAddress?: string
+    nationalId?: string
+    country?: string
+    city?: string
+    rejectionReason?: string
+    reviewedAt?: string
+  }
+  cash?: number
+  receivingCountry?: string
+  receivingCurrency?: string
   avatar?: UserAvatar
   address?: UserAddress
   verificationInfo?: UserVerificationInfo
+  createdAt?: string
+  updatedAt?: string
 }
 
 export type AuthLoginPayload = {
@@ -73,12 +91,15 @@ export type Service = {
 export type Transaction = {
   _id: string
   amount: number
+  currency?: string
   type?: string
   status?: string
   from?: string
   to?: string
   flag?: "received" | "delivered"
   createdAt?: string
+  description?: string
+  provider?: string
   user?: User
   userTo?: User
 }
@@ -90,6 +111,82 @@ export type AdminSetting = {
   updatedBy?: string
   createdAt?: string
   updatedAt?: string
+}
+
+export type Pagination = {
+  page: number
+  limit: number
+  total: number
+  pages: number
+}
+
+export type AdminDashboardData = {
+  summary: {
+    totalUsers: number
+    totalAgents: number
+    totalAdmins: number
+    pendingAgentApplications: number
+    totalTransactions: number
+    pendingKyc: number
+  }
+  transactionByStatus: Array<{ _id: string; count: number; amount: number }>
+  transactionByType: Array<{ _id: string; count: number; amount: number }>
+  latestTransactions: Transaction[]
+  latestUsers: User[]
+  gatewaySettings: PaymentGatewaySetting[]
+}
+
+export type AdminUsersData = {
+  users: User[]
+  pagination: Pagination
+}
+
+export type AdminTransactionsData = {
+  transactions: Transaction[]
+  pagination: Pagination
+}
+
+export type PaymentGatewayProvider = {
+  _id: string
+  code: string
+  name: string
+  type: "built_in" | "custom"
+  enabled: boolean
+  supportedModules: string[]
+  publicConfig?: Record<string, unknown>
+  credentials?: PaymentGatewayCredentials
+  hasCredentials?: boolean
+  notes?: string
+}
+
+export type PaymentGatewayCredentials = {
+  apiKey?: string
+  publicKey?: string
+  privateKey?: string
+  secretKey?: string
+  encryptionKey?: string
+  webhookSecret?: string
+  merchantId?: string
+  clientId?: string
+  clientSecret?: string
+  baseUrl?: string
+  environment?: string
+}
+
+export type PaymentGatewaySetting = {
+  _id: string
+  module: string
+  gateway: string
+  enabled: boolean
+  publicConfig?: Record<string, unknown>
+  notes?: string
+}
+
+export type PaymentGatewaySettingsData = {
+  modules: string[]
+  gateways: string[]
+  providers: PaymentGatewayProvider[]
+  settings: PaymentGatewaySetting[]
 }
 
 export type KycPayload = {
@@ -114,8 +211,8 @@ api.interceptors.request.use(async (config) => {
   const session = await getSession()
   const accessToken = session?.accessToken
   if (accessToken) {
-    config.headers = config.headers ?? {}
-    config.headers.Authorization = `Bearer ${accessToken}`
+    config.headers = AxiosHeaders.from(config.headers)
+    config.headers.set("Authorization", `Bearer ${accessToken}`)
   }
   return config
 })
@@ -129,8 +226,8 @@ api.interceptors.response.use(
       const session = await getSession()
       const accessToken = session?.accessToken
       if (accessToken) {
-        original.headers = original.headers ?? {}
-        original.headers.Authorization = `Bearer ${accessToken}`
+        original.headers = AxiosHeaders.from(original.headers)
+        original.headers.set("Authorization", `Bearer ${accessToken}`)
         return api(original)
       }
     }
@@ -200,6 +297,70 @@ export const userChangePassword = async (payload: { oldPassword: string; newPass
 
 export const getTransactions = async () => {
   const { data } = await api.get<ApiResponse<Transaction[]>>("/transaction")
+  return data
+}
+
+export const getAdminDashboard = async () => {
+  const { data } = await api.get<ApiResponse<AdminDashboardData>>("/admin/dashboard")
+  return data
+}
+
+export const getAdminUsers = async (params?: {
+  page?: number
+  limit?: number
+  role?: string
+  requestedRole?: string
+  agentStatus?: string
+  search?: string
+}) => {
+  const { data } = await api.get<ApiResponse<AdminUsersData>>("/admin/users", { params })
+  return data
+}
+
+export const updateAdminUserRole = async (userId: string, payload: { role: "user" | "agent" | "admin" }) => {
+  const { data } = await api.patch<ApiResponse<User>>(`/admin/users/${userId}/role`, payload)
+  return data
+}
+
+export const updateAgentApplicationStatus = async (
+  userId: string,
+  payload: { status: "approved" | "rejected"; rejectionReason?: string }
+) => {
+  const { data } = await api.patch<ApiResponse<User>>(`/admin/agent-applications/${userId}`, payload)
+  return data
+}
+
+export const getAdminTransactions = async (params?: { page?: number; limit?: number; type?: string; status?: string }) => {
+  const { data } = await api.get<ApiResponse<AdminTransactionsData>>("/admin/transactions", { params })
+  return data
+}
+
+export const getAdminPaymentGateways = async () => {
+  const { data } = await api.get<ApiResponse<PaymentGatewaySettingsData>>("/admin/payment-gateways")
+  return data
+}
+
+export const updateAdminPaymentGateway = async (payload: {
+  module: string
+  gateway: string
+  enabled: boolean
+  publicConfig?: Record<string, unknown>
+  notes?: string
+}) => {
+  const { data } = await api.put<ApiResponse<PaymentGatewaySetting>>("/admin/payment-gateways", payload)
+  return data
+}
+
+export const createAdminPaymentGatewayProvider = async (payload: {
+  code?: string
+  name: string
+  enabled: boolean
+  supportedModules: string[]
+  publicConfig?: Record<string, unknown>
+  credentials?: PaymentGatewayCredentials
+  notes?: string
+}) => {
+  const { data } = await api.post<ApiResponse<PaymentGatewayProvider>>("/admin/payment-gateways/providers", payload)
   return data
 }
 
