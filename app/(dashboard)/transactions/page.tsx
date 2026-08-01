@@ -10,7 +10,7 @@ import { CustomPagination } from "@/components/custom-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ViewModal } from "@/components/view-modal";
-import { getTransactions, type Transaction } from "@/lib/api";
+import { getAdminTransactions, type Transaction } from "@/lib/api";
 
 const getStatusColor = (status?: string) => {
   switch (status?.toLowerCase()) {
@@ -47,11 +47,11 @@ export default function Transactions() {
   );
 
   const { data, isLoading } = useQuery({
-    queryKey: ["transactions"],
-    queryFn: getTransactions,
+    queryKey: ["admin-transactions"],
+    queryFn: () => getAdminTransactions({ limit: 100 }),
   });
 
-  const transactions = data?.data ?? [];
+  const transactions = data?.data.transactions ?? [];
 
   const filteredData = useMemo(() => {
     return transactions.filter((item) => {
@@ -81,7 +81,7 @@ export default function Transactions() {
     0,
   );
   const successfulCount = transactions.filter(
-    (t) => (t.status ?? "").toLowerCase() === "delivered",
+    (t) => ["delivered", "successful"].includes((t.status ?? "").toLowerCase()),
   ).length;
 
   return (
@@ -131,7 +131,7 @@ export default function Transactions() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
-              GMD {totalAmount.toLocaleString()}
+              {transactions[0]?.currency ?? "GMD"} {totalAmount.toLocaleString()}
             </div>
             <p className="text-xs text-gray-500 mt-1">Trading volume</p>
           </CardContent>
@@ -259,7 +259,7 @@ export default function Transactions() {
                       {item.type ?? "-"}
                     </td>
                     <td className="px-6 py-3 font-semibold text-gray-900">
-                      GMD {Number(item.amount ?? 0).toLocaleString()}
+                      {item.currency ?? "GMD"} {Number(item.amount ?? 0).toLocaleString()}
                     </td>
                     <td className="px-6 py-3">
                       <Badge className={getStatusColor(item.status)}>
@@ -309,7 +309,7 @@ export default function Transactions() {
           {
             label: "Amount",
             value: viewTransaction
-              ? `GMD ${Number(viewTransaction.amount ?? 0).toLocaleString()}`
+              ? `${viewTransaction.currency ?? "GMD"} ${Number(viewTransaction.amount ?? 0).toLocaleString()}`
               : "-",
           },
           { label: "Status", value: viewTransaction?.status ?? "-" },
