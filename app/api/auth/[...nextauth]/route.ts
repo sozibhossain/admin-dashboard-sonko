@@ -1,13 +1,19 @@
 import NextAuth, { type NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import axios from "axios"
-import { API_BASE_URL } from "@/lib/api-base"
 
 const requireApiBaseUrl = () => {
-  if (!API_BASE_URL) {
-    throw new Error("NEXTPUBLICBASEURL is not configured")
+  const apiBaseUrl =
+    process.env.NEXTPUBLICBASEURL?.trim() ||
+    process.env.NEXT_PUBLIC_BASE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_BACKEND_URL?.trim() ||
+    ""
+
+  if (!apiBaseUrl) {
+    throw new Error("Backend API base URL is not configured")
   }
-  return API_BASE_URL
+
+  return apiBaseUrl.replace("localhost", "127.0.0.1").replace(/\/$/, "")
 }
 
 const decodeJwt = (token: string): { exp?: number } => {
@@ -67,34 +73,59 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email and password are required")
         }
 
-        const response = await axios.post(
-          `${requireApiBaseUrl()}/auth/login`,
-          {
-            email: credentials.email,
-            password: credentials.password,
-          },
-          { headers: { "Content-Type": "application/json" } }
-        )
+        try {
+          const response = await axios.post(
+            `${requireApiBaseUrl()}/auth/login`,
+            {
+              email: credentials.email.trim(),
+              password: credentials.password,
+            },
+            {
+              headers: { "Content-Type": "application/json" },
+              validateStatus: () => true,
+            }
+          )
 
-        const payload = response.data
-        if (!payload?.success) {
-          throw new Error(payload?.message ?? "Login failed")
-        }
+          const payload = response.data
+          if (!payload?.success || response.status >= 400) {
+            throw new Error(payload?.message || "Login failed")
+          }
 
-        const data = payload.data
-        if (!data?.accessToken) {
-          throw new Error("Login failed")
-        }
+          const data = payload.data ?? {}
+          const user = data.user ?? data
+          const accessToken = data.accessToken ?? user.accessToken
+          const refreshToken = data.refreshToken ?? user.refreshToken
+          const userId = `${data._id ?? user._id ?? user.id ?? credentials.email}`
 
-        return {
-          id: data._id,
-          email: data.user?.email ?? credentials.email,
-          name: data.user?.name ?? data.user?.email ?? "User",
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-          role: data.role,
-          _id: data._id,
-          user: data.user,
+          if (!accessToken || !refreshToken) {
+            throw new Error("Login succeeded but auth tokens were not returned")
+          }
+
+          const sessionUser = {
+            _id: userId,
+            name: user.name,
+            username: user.username,
+            email: user.email ?? credentials.email,
+            phone: user.phone,
+            role: data.role ?? user.role,
+            avatar: user.avatar,
+          }
+
+          return {
+            id: userId,
+            email: sessionUser.email,
+            name: sessionUser.name ?? sessionUser.username ?? sessionUser.email ?? "Admin",
+            accessToken,
+            refreshToken,
+            role: sessionUser.role,
+            _id: userId,
+            user: sessionUser,
+          }
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            throw new Error(error.response?.data?.message || error.message || "Login failed")
+          }
+          throw error
         }
       },
     }),
@@ -143,3 +174,8 @@ export const authOptions: NextAuthOptions = {
 const handler = NextAuth(authOptions)
 
 export { handler as GET, handler as POST }
+
+
+
+
+

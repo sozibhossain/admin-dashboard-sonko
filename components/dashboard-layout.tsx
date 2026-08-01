@@ -1,9 +1,11 @@
 "use client";
 
 import type React from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { LogoutModal } from "@/components/modals/logout-modal";
 import {
   LayoutGrid,
   Wrench,
@@ -18,6 +20,7 @@ import {
   ClipboardList,
   Bell,
   Settings,
+  Images,
   LogOut,
 } from "lucide-react";
 
@@ -32,6 +35,8 @@ const menuItems = [
   { name: "Fraud Detection", href: "/fraud-detection", icon: ShieldAlert },
   { name: "Customers", href: "/customers", icon: UserRound },
   { name: "Reports", href: "/reports", icon: FileText },
+  { name: "Payment Gateways", href: "/payment-gateways", icon: CreditCard },
+  { name: "Brand Logos", href: "/brand-logos", icon: Images },
   { name: "Audit Log", href: "/audit-log", icon: ClipboardList },
   { name: "Notifications", href: "/notifications", icon: Bell },
   { name: "Setting", href: "/settings", icon: Settings },
@@ -44,17 +49,18 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const activePath = pathname === "/" ? "/dashboard" : pathname;
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   return (
     <div className="flex h-screen bg-[#f5f6f8]">
       <div className="w-64 bg-white border-r border-[#d7d7d7] flex flex-col">
         <div className="h-16 flex items-center justify-center gap-2 px-5 border-b border-[#d7d7d7]">
           <Image
-            src="/logo.png"
+            src="/sunu.svg"
             alt="Company Logo"
-            width={32}
-            height={32}
-            className=" w-[32px] h-[44px]"
+            width={50}
+            height={50}
+            className=" w-[60px] h-[60px]"
           />
         </div>
 
@@ -83,7 +89,11 @@ export default function DashboardLayout({
         </nav>
 
         <div className="border-t border-[#d7d7d7] p-4">
-          <button className="flex items-center gap-2 text-[#f08a24] hover:text-[#e8791c] font-medium text-sm w-full px-4 py-2">
+          <button
+            type="button"
+            onClick={() => setIsLogoutModalOpen(true)}
+            className="flex items-center gap-2 text-[#f08a24] hover:text-[#e8791c] font-medium text-sm w-full px-4 py-2"
+          >
             <LogOut className="h-4 w-4" />
             <span>Logout</span>
           </button>
@@ -116,6 +126,12 @@ export default function DashboardLayout({
 
         <main className="flex-1 overflow-auto">{children}</main>
       </div>
+
+      <LogoutModal
+        open={isLogoutModalOpen}
+        onOpenChange={setIsLogoutModalOpen}
+      />
     </div>
   );
 }
+

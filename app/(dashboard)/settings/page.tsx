@@ -8,6 +8,7 @@ const settingsItems = [
   { label: "Access Permissions", href: "/settings/access-permissions" },
   { label: "Personal Information", href: "/settings/personal-information" },
   { label: "Change Password", href: "/settings/change-password" },
+  { label: "Payment Gateways", href: "/payment-gateways" },
 ]
 
 export default function Settings() {

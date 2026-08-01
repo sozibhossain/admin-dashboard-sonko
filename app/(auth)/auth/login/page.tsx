@@ -14,7 +14,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../..
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard"
+  const callbackUrlParam = searchParams.get("callbackUrl")
+  const callbackUrl =
+    callbackUrlParam && callbackUrlParam.startsWith("/") && !callbackUrlParam.startsWith("/auth")
+      ? callbackUrlParam
+      : "/dashboard"
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -35,20 +39,21 @@ function LoginForm() {
     })
 
     if (result?.error) {
-      if (result.error.toLowerCase().includes("otp")) {
+      const errorMessage = result.error || "Login failed"
+      if (errorMessage.toLowerCase().includes("otp")) {
         toast.warning("OTP verification required")
         router.push(`/auth/otp?email=${encodeURIComponent(email)}&mode=verify`)
-      } else if (result.error === "CredentialsSignin") {
+      } else if (errorMessage === "CredentialsSignin") {
         toast.error("Invalid email or password")
       } else {
-        toast.error(result.error)
+        toast.error(decodeURIComponent(errorMessage))
       }
       setIsSubmitting(false)
       return
     }
-
     toast.success("Welcome back")
-    router.push(callbackUrl)
+    router.replace(result?.url && result.url.startsWith("/") && !result.url.startsWith("/auth") ? result.url : callbackUrl)
+    router.refresh()
     setIsSubmitting(false)
   }
 
@@ -117,3 +122,7 @@ export default function LoginPage() {
     </Suspense>
   )
 }
+
+
+
+
