@@ -1,9 +1,11 @@
 "use client";
 
 import type React from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { LogoutModal } from "@/components/modals/logout-modal";
 import {
   LayoutGrid,
   Wrench,
@@ -47,6 +49,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const activePath = pathname === "/" ? "/dashboard" : pathname;
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   return (
     <div className="flex h-screen bg-[#f5f6f8]">
@@ -86,7 +89,11 @@ export default function DashboardLayout({
         </nav>
 
         <div className="border-t border-[#d7d7d7] p-4">
-          <button className="flex items-center gap-2 text-[#f08a24] hover:text-[#e8791c] font-medium text-sm w-full px-4 py-2">
+          <button
+            type="button"
+            onClick={() => setIsLogoutModalOpen(true)}
+            className="flex items-center gap-2 text-[#f08a24] hover:text-[#e8791c] font-medium text-sm w-full px-4 py-2"
+          >
             <LogOut className="h-4 w-4" />
             <span>Logout</span>
           </button>
@@ -119,6 +126,11 @@ export default function DashboardLayout({
 
         <main className="flex-1 overflow-auto">{children}</main>
       </div>
+
+      <LogoutModal
+        open={isLogoutModalOpen}
+        onOpenChange={setIsLogoutModalOpen}
+      />
     </div>
   );
 }

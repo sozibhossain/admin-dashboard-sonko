@@ -5,6 +5,7 @@ import {
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
@@ -40,12 +41,12 @@ export function LogoutModal({ open, onOpenChange }: LogoutModalProps) {
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <div className="flex justify-end gap-3">
-          <AlertDialogCancel>No, Stay</AlertDialogCancel>
+        <AlertDialogFooter>
+          <AlertDialogCancel>No</AlertDialogCancel>
           <AlertDialogAction onClick={handleLogout} className="bg-destructive">
-            Yes, Logout
+            Yes
           </AlertDialogAction>
-        </div>
+        </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   )
